@@ -1,14 +1,21 @@
-'''
+"""
 Versions:
 - python 3.8.0
 - beautifulsoup 4.9.3
 - seaborn 0.11.1
 - openpyxl 3.0.6
-'''
+- pandas 1.2.2
+- matplotlib 3.3.4
+"""
 from bs4 import BeautifulSoup
 import seaborn as sns
+from matplotlib import pyplot as plt
 from openpyxl import Workbook, load_workbook
+import pandas as pd
 import requests
+import re
+import os
+import json
 
 ## Problem 1
 # to search https://www.bbc.co.uk/search?q={keyword}&page={number}
@@ -45,9 +52,56 @@ def getArticles(keywords):
 					keywords[keyword].append(article_link)
 
 ## Problem 2
-# process each individual article
-def processArticle():
-	pass
+def saveArticle(contentList, keyword, counter):
+	"""Return null
+
+	@description - Saves all text from articles into named files
+	@param - List containing text, keyword which the program is currently looking at, index counter
+	
+	"""
+	with open(f'./Article_Contents/{keyword}/article_{counter}.txt', 'w', encoding='utf-8') as f:
+		for line in contentList:
+			sentence = line.getText(strip=True)
+			f.write(str(sentence)+'\n')
+
+	f.close()
+
+def processArticle(keywords):
+	"""Return null
+	
+	@description - Gets all articles from keyword search via BBC News
+	@param - Empty keyword dictionary
+	
+	"""
+	if os.path.exists('Article_Contents') == False:
+		os.mkdir('Article_Contents')
+
+	for keyword in keywords:
+		print(f'Extracting and saving content from articles of {keyword}')
+
+		if os.path.exists('Article_Contents/{}'.format(keyword)) == False:
+			os.mkdir('Article_Contents/{}'.format(keyword))
+
+		for counter, link in enumerate(keywords[keyword]):
+			resp = requests.get(link)
+			soup3 = BeautifulSoup(resp.text, 'html.parser')
+
+			try:
+				article_content = soup3.find('article', 'ssrcss-5h7eao-ArticleWrapper e1nh2i2l0').find_all('p') # gets list of sentences in article
+			except:
+				try:
+					article_content = soup3.find('body').find_all('table')[7].find_all('p') # same logic as line 106 but used on older BBC news articles
+				except:
+					continue
+
+			try:
+				subheadings = soup3.find('article', 'ssrcss-5h7eao-ArticleWrapper e1nh2i2l0').find_all('h2')
+			except:
+				pass
+
+			article_content += subheadings
+
+			saveArticle(article_content, keyword, counter)
 
 ## Problem 3
 def createDistanceSpreadsheet(keywords_workbook, active_sheet, keyword_count):
