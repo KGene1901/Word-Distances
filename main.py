@@ -218,7 +218,29 @@ def createDistanceSpreadsheet(keywords_workbook, active_sheet, keywords):
 
 ## Problem 4
 def visusalizeDistance():
-	pass
+	
+	"""Return null
+	
+	@description - Creates barplots to visualize the distances between every keyword
+	@param - null
+	
+	"""
+	print('Generating graph(s)')
+	df = pd.read_excel('distance.xlsx', 'Sheet1', index_col=None, na_values=['NA'])
+	df.set_index('Keywords', inplace=True)
+	
+	for keyword in df.columns:
+		row = df.loc[keyword]
+		row_flatten = row.values.flatten()
+
+		sns.set_context('paper')
+		plt.figure(figsize=(9, 6))
+		plt.subplots_adjust(left=0.1, right=0.955, bottom=0.33)
+		diagram = sns.barplot(x=df.columns, y=row_flatten, palette='Blues', edgecolor='w')
+		diagram.set_xticklabels(diagram.get_xticklabels(), rotation=45, horizontalalignment='right')
+		diagram.set(xlabel='Keywords', ylabel='Distance', title=keyword)
+		plt.savefig(f'./Diagrams/{keyword} distance diagram.png', format='png', dpi=100)
+		# plt.show()
 
 if __name__ == '__main__':
 	keywords_workbook = load_workbook('./keywords.xlsx')
