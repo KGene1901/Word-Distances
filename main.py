@@ -104,6 +104,68 @@ def processArticle(keywords):
 			saveArticle(article_content, keyword, counter)
 
 ## Problem 3
+def getOccurrence(file, keyword):
+	"""Return length of frequency array
+	
+	@description - Gets frequency of a keyword in the text file
+	@param - Path to article content text file, keyword which the program is currently looking at
+	
+	"""
+	with open(file, 'r', encoding='utf-8') as f:
+		data = f.read()
+	f.close()
+
+	freq = re.findall(keyword, str(data))
+
+	return len(freq)
+
+def createOccurrenceList(keywords):
+	"""Return list of keyword occurrences
+	
+	@description - Gets all articles from keyword search via BBC News
+	@param - Keyword dictionary
+	
+	"""
+	print('Generating occurrences')
+	path = './Article_Contents'
+	occurrenceList = {}
+
+	for root, directory, folder in os.walk(path):
+		if folder:
+			folder_name = root.split(os.sep)[1]
+			occurrenceList[folder_name] = {}
+		
+		for file in folder:
+			if '.txt' in file:
+				file = os.path.join(root, file)
+
+				for keyword in keywords:
+					if keyword not in occurrenceList[folder_name]:
+						occurrenceList[folder_name][keyword] = 0
+					else:
+						occurrenceList[folder_name][keyword] += getOccurrence(file, keyword)
+
+	debug_file = open('occurrenceList.json', 'w')
+	debug_file.write(json.dumps(occurrenceList, indent=4))
+	debug_file.close()
+
+	return occurrenceList
+
+def calculateTotalOccurrence(keyword, key):
+	"""Return total occurrences of all associated words
+	
+	@description - Sums up occurrences of associated words for a given keyword
+	@param - Keyword which the program is currently looking at
+	
+	"""
+	total_occurrence = 0
+	for associated_word in keyword:
+		if associated_word == key:
+			continue # does not take the keyword itself into account to avoid skewing the overall ratio
+		total_occurrence += keyword[associated_word]
+
+	return total_occurrence
+	
 def createDistanceSpreadsheet(keywords_workbook, active_sheet, keyword_count):
 	for col_num in range(2, keyword_count+2):
 		active_sheet.cell(row=1, column=col_num).value = active_sheet.cell(row=col_num, column=1).value
