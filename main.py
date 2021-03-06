@@ -18,15 +18,16 @@ import os
 import json
 
 ## Problem 1
-# to search https://www.bbc.co.uk/search?q={keyword}&page={number}
-# url should be like https://www.bbc.co.uk/news/* (need to try if focusing on technology only is better)
-# need 100 articles for each keyword
-# {'targeted threat', 'Advanced Persistent Threat', 'phishing', 'DoS attack', 'malware', 'computer virus', 'spyware', 'malicious bot', 'ransomware', 'encryption']
+def extractNewsInfo(article): 
+	"""Return boolean value if article is a news article, URL of the article
 
-def extractNewsInfo(article): # gets type and url link of news article from HTML
+	@description - Gets type and url link of news article from HTML
+	@param - HTML code of one article
+	
+	"""
 	soup2 = BeautifulSoup(str(article), 'lxml')
 	article_type = (soup2.find_all('span', 'ssrcss-1hizfh0-MetadataSnippet ecn1o5v0'))[1].find('span').text
-	article_link = (soup2.find('a', 'ssrcss-vh7bxp-PromoLink e1f5wbog6', href=True))['href']
+	article_link = (soup2.find('a', 'ssrcss-1b5rnkt-PromoLink e1f5wbog5', href=True))['href']
 	
 	if article_type == 'News':
 		return True, article_link
@@ -34,17 +35,26 @@ def extractNewsInfo(article): # gets type and url link of news article from HTML
 	return False, None
 
 def getArticles(keywords):
+	"""Return null
+
+	@description - Gets all articles from keyword search via BBC News
+	@param - Empty keyword dictionary
+	
+	"""
 	for keyword in keywords:
-		print(keywords)
+		print(f'Looking for articles related to {keyword}')
 		page_count = 1
 
 		while len(keywords[keyword]) <= 100:
-			params = {'q' : keyword, 'page' : page_count}
+			params = {'q' : keyword, 'page' : page_count} # BBC News URL Format: https://www.bbc.co.uk/search?q={keyword}&page={number}
 			url = 'https://www.bbc.co.uk/search'
 			resp = requests.get(url, params=params)
-			page_count += 1
+			page_count += 1 # assists with traversing through pages
 			soup = BeautifulSoup(resp.text, 'html.parser')
-			articles = soup.find('ul', 'ssrcss-1a1yp44-Stack e1y4nx260').find_all('li')
+			articles = soup.find('ul', 'ssrcss-1a1yp44-Stack e1y4nx260').find_all('li') # gets list of articles
+
+			if len(articles) == 0:
+				break
 			
 			for article in articles:
 				isNews, article_link = extractNewsInfo(article)
@@ -165,7 +175,7 @@ def calculateTotalOccurrence(keyword, key):
 		total_occurrence += keyword[associated_word]
 
 	return total_occurrence
-	
+
 def calculateDistance(occurrenceList):
 	"""Return a dictionary of keyword distances
 	
@@ -250,5 +260,7 @@ if __name__ == '__main__':
 	for x in range(2, active_sheet.max_row + 1):
 		keywords[active_sheet.cell(row=x, column=1).value] = []
 
-	# getArticles(keywords)
-	createDistanceSpreadsheet(keywords_workbook, active_sheet, len(keywords))
+	getArticles(keywords)
+	processArticle(keywords)
+	createDistanceSpreadsheet(keywords_workbook, active_sheet, keywords)
+	visusalizeDistance()
