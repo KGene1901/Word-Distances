@@ -166,9 +166,52 @@ def calculateTotalOccurrence(keyword, key):
 
 	return total_occurrence
 	
-def createDistanceSpreadsheet(keywords_workbook, active_sheet, keyword_count):
-	for col_num in range(2, keyword_count+2):
+def calculateDistance(occurrenceList):
+	"""Return a dictionary of keyword distances
+	
+	@description - Calculates distances between keywords
+	@param - List of keyword occurrences
+	
+	"""
+	print('Calculating distances')
+	keyword_dists = {}
+	for key in occurrenceList:
+		total_occurrence = calculateTotalOccurrence(occurrenceList[key], key)
+		if total_occurrence == 0:
+			total_occurrence = 1
+		keyword_dists[key] = []
+		for associated_word in occurrenceList[key]:
+			if associated_word == key:
+				keyword_dists[key].append(100)
+			else:
+				keyword_dists[key].append(round((occurrenceList[key][associated_word] / total_occurrence) * 100, 2)) # calculates percentage as distance to 2 decimal points
+
+	debug_file = open('distance.json', 'w')
+	debug_file.write(json.dumps(keyword_dists, indent=4))
+	debug_file.close()
+
+	return keyword_dists
+
+def createDistanceSpreadsheet(keywords_workbook, active_sheet, keywords):
+	"""Return null
+	
+	@description - Creates an excel file named 'distance.xlsx' which contains the keyword distances values
+	@param - Excel workbook, active worksheet in the workbook, keyword dictionary
+	
+	"""
+	occurrenceList = createOccurrenceList(keywords)
+	keyword_dists = calculateDistance(occurrenceList)
+	row_pos = 2
+
+	for col_num in range(2, len(keywords)+2):
 		active_sheet.cell(row=1, column=col_num).value = active_sheet.cell(row=col_num, column=1).value
+	
+	for keyword in keywords:
+		col_pos = 2
+		for distance in keyword_dists[keyword]:
+			active_sheet.cell(row=row_pos, column=col_pos).value = distance
+			col_pos += 1
+		row_pos += 1
 
 	keywords_workbook.save('distance.xlsx')
 
